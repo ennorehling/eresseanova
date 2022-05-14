@@ -1,15 +1,5 @@
 local table_dump = require('tabledump')
-local tiles = {}
-
-function tiles_add(x,y,r)
-	if not tiles[y] then tiles[y] = {} end
-	tiles[y][x] = r
-end
-
-function tiles_get(x,y)
-	if not tiles[y] then return nil end
-	return tiles[y][x]
-end
+local tiles = require('tiles')
 
 local tile7 = {
 	xof = { x = 3, y = -1 },
@@ -95,30 +85,31 @@ function print_tile(x, y, tile, def, edge)
 	end
 end
 
-function find_tile(min_turn)
+function find_tile(world, min_turn)
 	local avail = {}
-	for y, row in pairs(tiles) do
-		for x, tile in pairs(row) do
-			for e = 2, 7 do
-				local tx = x + tile7.hexes[e].x
-				local ty = y + tile7.hexes[e].y
-				local n = tiles_get(tx, ty)
-				if not n then
-					local key = string.format('%d,%d', tx, ty)
-					local match = avail[key]
-					if not match then
-						match = {
-							x = tx,
-							y = ty
-						}
-					end
-					match.nb = (match.nb or 0) + 1
-					local turn = tile.turn
-					if (not match.turn) or turn < match.turn then
-						match.turn = turn
-					end
-					avail[key] = match
+	-- print(table_dump(world))
+	for tile in world:all() do
+		local x = tile.x
+		local y = tile.y
+		for e = 2, 7 do
+			local tx = x + tile7.hexes[e].x
+			local ty = y + tile7.hexes[e].y
+			local n = world:get(tx, ty)
+			if not n then
+				local key = string.format('%d,%d', tx, ty)
+				local match = avail[key]
+				if not match then
+					match = {
+						x = tx,
+						y = ty
+					}
 				end
+				match.nb = (match.nb or 0) + 1
+				local turn = tile.turn
+				if (not match.turn) or turn < match.turn then
+					match.turn = turn
+				end
+				avail[key] = match
 			end
 		end
 	end
@@ -140,40 +131,45 @@ function find_tile(min_turn)
 	return nil
 end
 
-function build()
+function build(world)
 	for turn = 1, 20 do
 		local t = 'Ebene'
-		choice = find_tile(turn - 5)
-		tiles_add(choice.x, choice.y, {
+		choice = find_tile(world, turn - 5)
+		world:add(choice.x, choice.y, {
+			x = choice.x,
+			y = choice.y,
 			terrain = 'Ozean',
 			turn = turn
 		})
-		choice = find_tile(turn - 5)
-		tiles_add(choice.x, choice.y, {
+		choice = find_tile(world, turn - 5)
+		world:add(choice.x, choice.y, {
+			x = choice.x,
+			y = choice.y,
 			terrain = 'Ebene',
 			turn = turn
 		})
 	end
 end
 
-function report(def)
+function report(world, def)
 	print('VERSION 68')
 	print('"Eressea";Spiel')
 	print('1;Runde')
 	print('PARTEI 1')
 	print('"Les Maîtres Du Temps";Parteiname')
 	print('"enno@eressea.de";email')
-	for y, v in pairs(tiles) do
-		for x, tile in pairs(v) do
-			local edge = math.random(1, 6)
-			print_tile(x, y, tile, def, edge)
-		end
+	for tile in world:all() do
+		local edge = math.random(1, 6)
+		print_tile(tile.x, tile.y, tile, def, edge)
 	end
 end
 
-tiles_add(0, 0, {
+local world = tiles()
+world:add(0, 0, {
+	x = 0,
+	y = 0,
 	terrain = 'Ebene',
 	turn = 0
 })
-build()
-report(tile19)
+build(world)
+report(world, tile19)
