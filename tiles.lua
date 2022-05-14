@@ -29,7 +29,7 @@ local function all_tiles(obj)
     end
 end
 
-local function construct()
+return function()
     local obj = {}
     obj.get = get_tile
     obj.add = add_tile
@@ -38,5 +38,3 @@ local function construct()
     obj._index = {}
     return obj
 end
-
-return construct
