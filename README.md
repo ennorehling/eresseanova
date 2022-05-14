@@ -1,2 +1,2 @@
-# coolstr
-Everybody needs to write a string library once in their life
+# Eressea Nova
+Experimental code for a new Eressea world generator
